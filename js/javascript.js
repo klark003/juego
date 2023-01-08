@@ -1,6 +1,7 @@
 let gameScene = new Phaser.Scene('Game');
 
 var teclas;
+var playing = false;
 
 gameScene.init = function(){
 
@@ -13,9 +14,18 @@ gameScene.preload = function(){
     this.load.image('player','assets/img/caballero.jpeg');
     this.load.image('fondo', 'assets/img/fondo3.png');
 
+    //Cargar sonido
+    this.load.audio('music', 'assets/music/backgroundmusic.mp3');
+
 }
 
 gameScene.create = function(){
+
+    if (!playing && !this.load.isLoading()) {
+        playing = true
+        var music = this.sound.add('music') 
+        music.loop = true;
+    }
 
     this.add.image(500, 380, 'fondo');
     //piso 
