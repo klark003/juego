@@ -26,11 +26,12 @@ gameScene.preload = function () {
 gameScene.create = function () {
 
     if (!playing && !this.load.isLoading()) {
-        playing = true
-        var music = this.sound.add('music')
+        playing = true;
+        var music = this.sound.add('music');
+        //music.play();
         music.loop = true;
     }
-
+    console.log(this.load.isLoading())
     this.add.image(500, 380, 'fondo');
     //piso 
     var piso = this.add.tileSprite(480, 700, 3 * 420, 1 * 100, 'floor');
