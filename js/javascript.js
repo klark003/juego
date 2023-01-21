@@ -28,7 +28,7 @@ gameScene.create = function () {
     if (!playing && !this.load.isLoading()) {
         playing = true;
         var music = this.sound.add('music');
-        //music.play();
+        music.play();
         music.loop = true;
     }
     console.log(this.load.isLoading())
