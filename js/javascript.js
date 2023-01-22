@@ -6,6 +6,32 @@ var dir = "-";
 var onAir = false;
 var distanceJump = -80;
 var isLoadJump = false;
+var platforms;
+var player;
+var floor;
+var walls;
+var level = 1;
+var posBlocksLevels = [
+    {//lvl 0
+        floor: true,
+        blocks: [
+            { x: 600, y: 20 }, { x: 700, y: 20 },{ x: 800, y: 20 }, { x: 900, y: 20 },
+            { x: 100, y: 150 },
+            { x: 600, y: 300 }, { x: 700, y: 300 },
+            { x: 100, y: 400 }, { x: 200, y: 400 }, 
+            { x: 500, y: 580 }, { x: 600, y: 580 }, { x: 700, y: 580 },
+            
+        ]
+    },//end lvl 0
+    {//lvl 1
+        blocks: [
+            { x: 100, y: 500 },{ x: 200, y: 500 },{ x: 500, y: 500 },
+            { x: 900, y: 600 },
+            { x: 600, y: 820 },{ x: 700, y: 820 },{ x: 800, y: 820 },{ x: 900, y: 820 },
+        ]
+    }//end lvl 1
+
+]
 
 gameScene.init = function () {
 
@@ -13,10 +39,16 @@ gameScene.init = function () {
 
 gameScene.preload = function () {
     //cargar de imagenes
+    this.load.image('wall', 'assets/img/wall.jpg');
     this.load.image('floor', 'assets/img/floor.jpg');
     this.load.image('block', 'assets/img/block.jpg');
     this.load.image('player', 'assets/img/caballero.jpeg');
     this.load.image('fondo', 'assets/img/fondo3.png');
+
+    this.load.image('spikeUp', 'assets/img/spikeUp.png');
+    this.load.image('spikeDown', 'assets/img/spikeDown.png');
+    this.load.image('spikeLeft', 'assets/img/spikeLeft.png');
+    this.load.image('spikeRight', 'assets/img/spikeRight.png');
 
     //Cargar sonido
     this.load.audio('music', 'assets/music/backgroundmusic.mp3');
@@ -28,67 +60,112 @@ gameScene.create = function () {
     if (!playing && !this.load.isLoading()) {
         playing = true;
         var music = this.sound.add('music');
-        music.play();
+        //music.play();
         music.loop = true;
     }
-    console.log(this.load.isLoading())
-    this.add.image(500, 380, 'fondo');
-    //piso 
-    var piso = this.add.tileSprite(480, 700, 3 * 420, 1 * 100, 'floor');
-    this.physics.add.existing(piso, true);
 
-    //escalon
-    var platform = this.add.tileSprite(230, 500, 5 * 69, 1 * 49, 'block');
-    this.physics.add.existing(platform, true);
-
-    var platform2 = this.add.tileSprite(650, 370, 4 * 69, 2 * 49, 'block');
-    this.physics.add.existing(platform2, true);
-
-    var platform3 = this.add.tileSprite(200, 200, 2 * 69, 1 * 49, 'block');
-    this.physics.add.existing(platform3, true);
+    this.add.image(530, 420, 'fondo');
 
     //player
-    this.player = this.add.sprite(180, 462, 'player');
-    this.physics.add.existing(this.player);
+    player = this.physics.add.sprite(300, 613, 'player');
+
+    player.x = 800;
+    player.y = 700;
+
+    //plataforms
+    platforms = this.physics.add.staticGroup();
+    walls = this.physics.add.staticGroup();
+
+    walls.create(0, 420, "wall");
+    walls.create(1060, 420, "wall");
+
+    createGameObjects(this);
 
     //colisiones
-    this.physics.add.collider(this.player, piso);
-    this.physics.add.collider(this.player, platform);
-    this.physics.add.collider(this.player, platform2);
-    this.physics.add.collider(this.player, platform3);
+
+    this.physics.add.collider(player, walls, shockPlatformPlayer);
 
     //teclas
     teclas = this.input.keyboard.createCursorKeys();
+    
+}
+
+function createGameObjects(game) {
+    posBlocksLevels[level].blocks.forEach(pos => {
+        platforms.create(pos.x, pos.y, "block");
+    })
+    if (posBlocksLevels[level].floor){
+        platforms.create(530, 734, 'floor').setScale(2).refreshBody();
+    }
+
+    game.physics.add.collider(player, platforms, shockPlatformPlayer);
+}
+
+function changeLevel(game,isUp){
+    let childrens = platforms.getChildren();
+    while(childrens.length > 0){
+        for (let i = 0; i < childrens.length; i++) {
+            childrens[i].destroy();
+        }
+    }
+    if(isUp){
+        level++;
+    }else{
+        level--;
+    }
+    createGameObjects(game);
+}
+
+function shockPlatformPlayer(player, plataform) {
+    if (!player.body.touching.down && !player.body.touching.up) {
+        if (dir == "-") {
+            dir = "+";
+        } else {
+            dir = "-";
+        }
+    }
+}
+function shockSpikePlayer(player, spike) {
 
 }
 
 gameScene.update = function () {
-    this.player.body.velocity.x = 0;
-    if(teclas.up.isDown){
-        if(this.player.body.touching.down){
+
+    if (player.y <= -16) {
+        player.y = 840;
+        changeLevel(this,true);
+    }
+    if (player.y >= 850) {
+        player.y = -15;
+        changeLevel(this,false);
+    }
+
+    player.body.velocity.x = 0;
+    if (teclas.up.isDown) {
+        if (player.body.touching.down) {
             isLoadJump = true;
-            if(distanceJump >= -400){
-                distanceJump -= 2;
+            if (distanceJump >= -950) {
+                distanceJump -= 10;
             }
         }
-    }else if(isLoadJump){
+    } else if (isLoadJump) {
         isLoadJump = false;
-        this.player.body.velocity.y = distanceJump;
+        player.body.velocity.y = distanceJump;
     }
-    if (this.player.body.touching.down) {
+    if (player.body.touching.down) {
         if (teclas.left.isDown) {
             dir = "-";
         } else if (teclas.right.isDown) {
             dir = "+";
         }
-        if(!teclas.up.isDown){
+        if (!teclas.up.isDown) {
             distanceJump = -80;
         }
-    }else{
+    } else {
         if (dir == "-") {
-            this.player.body.velocity.x = -200;
+            player.body.velocity.x = -200;
         } else {
-            this.player.body.velocity.x = 200;
+            player.body.velocity.x = 200;
         }
     }
 
@@ -103,7 +180,6 @@ const config = {
     physics: {
         default: 'arcade',
         arcade: {
-            //debug: true,
             gravity: {
                 y: 300,
             },
