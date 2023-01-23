@@ -48,8 +48,8 @@ gameScene.create = function () {
     this.physics.add.existing(platform3, true);
 
     //player
-    this.player = this.add.sprite(180, 462, 'player');
-    this.physics.add.existing(this.player);
+    this.player = this.physics.add.image(180, 462, 'player');
+    this.player.setCollideWorldBounds(true);
 
     //colisiones
     this.physics.add.collider(this.player, piso);
@@ -57,8 +57,20 @@ gameScene.create = function () {
     this.physics.add.collider(this.player, platform2);
     this.physics.add.collider(this.player, platform3);
 
+    //colisiones
+    group = this.physics.add.staticGroup({
+        key: 'platform1',
+        frameQuantity: 30
+    });
+
     //teclas
     teclas = this.input.keyboard.createCursorKeys();
+
+    //agrupa las colisiones
+    group.refresh();
+
+    this.physics.add.collider(this.player, group);
+
 
 }
 
