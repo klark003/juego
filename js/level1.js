@@ -14,7 +14,7 @@ var soundShockPlataform;
 var soundJump;
 var soundWinner;
 var music;
-var level = 8;
+var level = 0;
 var posBlocksLevels = [
     {//lvl 0
         blocks: [
@@ -155,9 +155,6 @@ class Level1 extends Phaser.Scene {
 
         //player
         player = this.physics.add.sprite(300, 613, 'player');
-
-        player.x = 600;
-        player.y = 600;
 
         //plataforms
         flag = this.physics.add.staticGroup();
