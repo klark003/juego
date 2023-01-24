@@ -8,13 +8,16 @@ var isTouchingFloor = true;
 var player;
 var platforms;
 var walls;
+var traps = {};
+var hitbox = {};
 var flag;
+var soundShockTrap;
 var soundShockFloor;
 var soundShockPlataform;
 var soundJump;
 var soundWinner;
 var music;
-var level = 0;
+var level = 8;
 var posBlocksLevels = [
     {//lvl 0
         blocks: [
@@ -23,6 +26,9 @@ var posBlocksLevels = [
             { x: 600, y: 300 }, { x: 700, y: 300 },
             { x: 100, y: 400 }, { x: 200, y: 400 },
             { x: 500, y: 580 }, { x: 600, y: 580 }, { x: 700, y: 580 },
+        ],
+        traps: [
+            { x: 500, y: 480 }
         ]
     },//end lvl 0
     {//lvl 1
@@ -32,6 +38,9 @@ var posBlocksLevels = [
             { x: 500, y: 500 },
             { x: 900, y: 600 },
             { x: 600, y: 820 }, { x: 700, y: 820 }, { x: 800, y: 820 }, { x: 900, y: 820 },
+        ],
+        traps: [
+            { x: 900, y: 720 }
         ]
     },//end lvl 1
     {//lvl 2
@@ -124,9 +133,13 @@ class Level1 extends Phaser.Scene {
         this.load.image('wall', 'assets/img/wall.jpg');
         this.load.image('floor', 'assets/img/floor.jpg');
         this.load.image('block', 'assets/img/block.jpg');
-        this.load.image('player', 'assets/img/caballero.jpeg');
         this.load.image('fondo', 'assets/img/fondo3.png');
-        this.load.image('flag', 'assets/img/flag.png');
+
+        //cargar de sprites
+        this.load.spritesheet('player', 'assets/img/knight.png', { frameWidth: 32, frameHeight: 32 });
+        this.load.spritesheet('flag', 'assets/img/flag.png', { frameWidth: 60, frameHeight: 60 });
+        this.load.spritesheet('trap', 'assets/img/trap.png', { frameWidth: 30, frameHeight: 18 });
+        this.load.spritesheet('hitbox', 'assets/img/hitboxTrap.png', { frameWidth: 30, frameHeight: 2 });
 
         //Cargar sonido
         this.load.audio('music', 'assets/music/backgroundmusic1.mp3');
@@ -134,6 +147,7 @@ class Level1 extends Phaser.Scene {
         this.load.audio('shockPlataform', 'assets/music/shockPlataform.mp3');
         this.load.audio('jump', 'assets/music/jump.mp3');
         this.load.audio('winner', 'assets/music/winner.mp3');
+        this.load.audio('shockTrap', 'assets/music/trap.mp3')
     }
 
     create() {
@@ -144,6 +158,7 @@ class Level1 extends Phaser.Scene {
         soundShockPlataform = this.sound.add('shockPlataform');
         soundJump = this.sound.add('jump');
         soundWinner = this.sound.add('winner');
+        soundShockTrap = this.sound.add('shockTrap');
 
         if (!playing && !this.load.isLoading()) {
             playing = true;
@@ -154,21 +169,78 @@ class Level1 extends Phaser.Scene {
         this.add.image(530, 420, 'fondo');
 
         //player
-        player = this.physics.add.sprite(300, 613, 'player');
+        player = this.physics.add.sprite(300, 580, 'player').setScale(1.5);
 
         //plataforms
-        flag = this.physics.add.staticGroup();
         platforms = this.physics.add.staticGroup();
         walls = this.physics.add.staticGroup();
 
         walls.create(0, 420, "wall");
         walls.create(1060, 420, "wall");
 
-        this.createGameObjects(this);
-
         //colisiones
 
         this.physics.add.collider(player, walls, this.shockPlatformPlayer);
+
+        //animaciones
+
+        this.anims.create({
+            key: 'flagAnimation',
+            frames: this.anims.generateFrameNumbers('flag', { start: 0, end: 4 }),
+            frameRate: 7,
+            repeat: -1
+        })
+
+        this.anims.create({
+            key: 'trapAnimation',
+            frames: this.anims.generateFrameNumbers('trap', { start: 0, end: 2 }),
+            frameRate: 7,
+            repeat: 0
+        })
+
+        this.anims.create({
+            key: 'viewPlayerLeft',
+            frames: this.anims.generateFrameNumbers('player', { start: 0, end: 0 }),
+            frameRate: 7,
+            repeat: 0
+        })
+
+        this.anims.create({
+            key: 'viewPlayerRigth',
+            frames: this.anims.generateFrameNumbers('player', { start: 6, end: 6 }),
+            frameRate: 7,
+            repeat: 0
+        })
+
+        this.anims.create({
+            key: 'prepareJumpPlayerLeft',
+            frames: this.anims.generateFrameNumbers('player', { start: 1, end: 1 }),
+            frameRate: 7,
+            repeat: 0
+        })
+
+        this.anims.create({
+            key: 'prepareJumpPlayerRigth',
+            frames: this.anims.generateFrameNumbers('player', { start: 7, end: 7 }),
+            frameRate: 7,
+            repeat: 0
+        })
+
+        this.anims.create({
+            key: 'jumpPlayerLeft',
+            frames: this.anims.generateFrameNumbers('player', { start: 2, end: 5 }),
+            frameRate: 7,
+            repeat: 0
+        })
+
+        this.anims.create({
+            key: 'jumpPlayerRigth',
+            frames: this.anims.generateFrameNumbers('player', { start: 8, end: 11 }),
+            frameRate: 7,
+            repeat: 0
+        })
+
+        this.createGameObjects(this);
 
         //teclas
         teclas = this.input.keyboard.createCursorKeys();
@@ -184,16 +256,39 @@ class Level1 extends Phaser.Scene {
         }
         if (level == 8) {
             platforms.create(530, -50, 'floor').setScale(2).refreshBody();
-            flag.create(posBlocksLevels[level].flag.x, posBlocksLevels[level].flag.y, "flag");
-            this.physics.add.collider(player, flag, this.winnerPlayer,null,this);
-        }
 
+            flag = this.physics.add.sprite(100, 100, 'flag');
+            flag.anims.play("flagAnimation");
+
+            this.physics.add.collider(player, flag, this.winnerPlayer, null, this);
+            this.physics.add.collider(flag, platforms);
+        }
+        if(posBlocksLevels[level].traps){
+            posBlocksLevels[level].traps.forEach((trap,index) => {
+                traps["trap"+index] = this.physics.add.sprite(trap.x, trap.y, 'trap').setScale(2);
+                hitbox["trap"+index] = this.physics.add.sprite(trap.x, trap.y, 'hitbox').setScale(2);
+                hitbox["trap"+index].indexTrap = index;
+                this.physics.add.collider(hitbox["trap"+index], player , this.lossePlayer,null,this);
+                this.physics.add.collider(hitbox["trap"+index], platforms);
+                this.physics.add.collider(traps["trap"+index] , platforms);
+            })
+        }
         this.physics.add.collider(player, platforms, this.shockPlatformPlayer);
     }
 
     winnerPlayer(player, flag) {
         soundWinner.play();
         this.scene.start('gameOver');
+    }
+
+    lossePlayer(hitbox,player){
+        this.physics.pause();
+        traps["trap" + hitbox.indexTrap].anims.play("trapAnimation");
+        soundShockTrap.play();
+        setTimeout(() => {
+            level = 0;
+            this.scene.restart();
+        }, 1000);
     }
 
     changeLevel(isUp) {
@@ -203,14 +298,24 @@ class Level1 extends Phaser.Scene {
                 childrens[i].destroy();
             }
         }
-        flag.getChildren().forEach(flag => flag.destroy())
+        if(posBlocksLevels[level].traps){
+            posBlocksLevels[level].traps.forEach((trap,index) => {
+                traps["trap"+index].destroy();
+                hitbox["trap"+index].destroy();
+            })
+        }
         if (isUp) {
             level++;
         } else {
+            if (level == 8) {
+                flag.destroy();
+            }
             level--;
         }
         this.createGameObjects();
     }
+
+
 
     shockPlatformPlayer(player, plataform) {
         if (!player.body.touching.down && !player.body.touching.up) {
@@ -223,13 +328,19 @@ class Level1 extends Phaser.Scene {
         } else if (player.body.touching.up) {
             soundShockPlataform.play();
         } else if (player.body.touching.down && isTouchingFloor) {
+            if (isTouchingFloor) {
+                if (dir == "-") {
+                    player.anims.play("viewPlayerLeft")
+                } else {
+                    player.anims.play("viewPlayerRigth")
+                }
+            }
             isTouchingFloor = false;
             soundShockFloor.play();
         }
     }
 
-    update () {
-
+    update() {
         if (player.y <= -16) {
             player.y = 840;
             this.changeLevel(true);
@@ -238,11 +349,16 @@ class Level1 extends Phaser.Scene {
             player.y = -15;
             this.changeLevel(false);
         }
-
         player.body.velocity.x = 0;
         if (teclas.up.isDown) {
             if (player.body.touching.down) {
+                if (dir == "-") {
+                    player.anims.play("prepareJumpPlayerLeft")
+                } else {
+                    player.anims.play("prepareJumpPlayerRigth")
+                }
                 isLoadJump = true;
+
                 if (distanceJump >= -950) {
                     distanceJump -= 10;
                 }
@@ -251,12 +367,19 @@ class Level1 extends Phaser.Scene {
             isLoadJump = false;
             isTouchingFloor = true;
             soundJump.play();
+            if (dir == "-") {
+                player.anims.play("jumpPlayerLeft")
+            } else {
+                player.anims.play("jumpPlayerRigth")
+            }
             player.body.velocity.y = distanceJump;
         }
         if (player.body.touching.down) {
             if (teclas.left.isDown) {
+                player.anims.play("viewPlayerLeft")
                 dir = "-";
             } else if (teclas.right.isDown) {
+                player.anims.play("viewPlayerRigth")
                 dir = "+";
             }
             if (!teclas.up.isDown) {
