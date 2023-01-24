@@ -40,6 +40,7 @@ var posBlocksLevels = [
             { x: 600, y: 820 }, { x: 700, y: 820 }, { x: 800, y: 820 }, { x: 900, y: 820 },
         ],
         traps: [
+            { x: 100, y: 100 },
             { x: 900, y: 720 }
         ]
     },//end lvl 1
@@ -49,6 +50,9 @@ var posBlocksLevels = [
             { x: 300, y: 400 },
             { x: 300, y: 500 }, { x: 600, y: 500 },
             { x: 100, y: 700 }, { x: 200, y: 700 }, { x: 300, y: 700 }, { x: 400, y: 700 },
+        ],
+        traps: [
+            { x: 760, y: 100 }
         ]
     },//end lvl 2
     {//lvl 3
@@ -60,6 +64,10 @@ var posBlocksLevels = [
             { x: 860, y: 600 },
             { x: 360, y: 700 }, { x: 460, y: 700 }, { x: 560, y: 700 }, { x: 660, y: 700 }, { x: 760, y: 700 }, { x: 860, y: 700 },
             { x: 100, y: 760 },
+        ],
+        traps: [
+            { x: 760, y: 100 },
+            { x: 560, y: 600 }
         ]
     },//end lvl 3
     {//lvl 4
@@ -70,6 +78,10 @@ var posBlocksLevels = [
             { x: 200, y: 400 },
             { x: 200, y: 500 }, { x: 400, y: 500 }, { x: 600, y: 500 },
             { x: 860, y: 700 }, { x: 960, y: 700 },
+        ],
+        traps: [
+            { x: 660, y: 200 },
+            { x: 860, y: 600 }
         ]
     },//end lvl 4
     {//lvl 5
@@ -83,6 +95,10 @@ var posBlocksLevels = [
             { x: 200, y: 500 }, { x: 600, y: 500 },
             { x: 200, y: 600 },
             { x: 200, y: 700 }, { x: 300, y: 700 }, { x: 760, y: 700 }, { x: 860, y: 700 }, { x: 960, y: 700 },
+        ],
+        traps: [
+            { x: 400, y: 150 },
+            { x: 300, y: 600 }
         ]
     },//end lvl 5
     {//lvl 6
@@ -97,6 +113,10 @@ var posBlocksLevels = [
             { x: 200, y: 700 }, { x: 560, y: 700 }, { x: 660, y: 700 }, { x: 760, y: 700 }, { x: 860, y: 700 }, { x: 960, y: 700 },
             { x: 200, y: 800 },
             { x: 200, y: 900 },
+        ],
+        traps: [
+            { x: 400, y: 150 },
+            { x: 600, y: 600 }
         ]
     },//end lvl 6
     {//lvl 7
@@ -109,6 +129,11 @@ var posBlocksLevels = [
             { x: 200, y: 400 }, { x: 760, y: 400 },
             { x: 200, y: 500 }, { x: 960, y: 500 },
             { x: 200, y: 700 }, { x: 260, y: 700 }, { x: 360, y: 700 }, { x: 460, y: 700 }, { x: 560, y: 700 }, { x: 660, y: 700 }, { x: 760, y: 700 }, { x: 860, y: 700 }, { x: 960, y: 700 },
+        ],
+        traps: [
+            { x: 460, y: 150 },
+            { x: 660, y: 250 },
+            { x: 460, y: 600 }
         ]
     },//end lvl 7
     {//lvl 8
@@ -118,7 +143,10 @@ var posBlocksLevels = [
             { x: 760, y: 500 },
             { x: 360, y: 700 }, { x: 460, y: 700 }, { x: 560, y: 700 },
         ],
-        flag: { x: 100, y: 100 }
+        flag: { x: 100, y: 100 },
+        traps: [
+            { x: 560, y: 600 }
+        ]
     },//end lvl 8
 
 ]
@@ -169,7 +197,7 @@ class Level1 extends Phaser.Scene {
         this.add.image(530, 420, 'fondo');
 
         //player
-        player = this.physics.add.sprite(300, 580, 'player').setScale(1.5);
+        player = this.physics.add.sprite(300, 608, 'player').setScale(1.5);
 
         //plataforms
         platforms = this.physics.add.staticGroup();
@@ -320,8 +348,10 @@ class Level1 extends Phaser.Scene {
     shockPlatformPlayer(player, plataform) {
         if (!player.body.touching.down && !player.body.touching.up) {
             if (dir == "-") {
+                player.anims.play("jumpPlayerRigth")
                 dir = "+";
             } else {
+                player.anims.play("jumpPlayerLeft")
                 dir = "-";
             }
             soundShockPlataform.play();
@@ -376,10 +406,15 @@ class Level1 extends Phaser.Scene {
         }
         if (player.body.touching.down) {
             if (teclas.left.isDown) {
-                player.anims.play("viewPlayerLeft")
+                if(!teclas.up.isDown){
+                    player.anims.play("viewPlayerLeft")
+                }
                 dir = "-";
             } else if (teclas.right.isDown) {
-                player.anims.play("viewPlayerRigth")
+                if(!teclas.up.isDown){
+                    player.anims.play("viewPlayerRigth")
+                }
+                
                 dir = "+";
             }
             if (!teclas.up.isDown) {
