@@ -17,7 +17,7 @@ var soundShockPlataform;
 var soundJump;
 var soundWinner;
 var music;
-var level = 8;
+var level = 0;
 var posBlocksLevels = [
     {//lvl 0
         blocks: [
