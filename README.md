@@ -1,4 +1,4 @@
-# Juego Jumping king para la materia de Desarrollo de Video Juegos
+# Juego Kjumping para la materia de Desarrollo de Video Juegos
 Realizado por:
 Carlos Henao,
 Oscar Trujillo,
